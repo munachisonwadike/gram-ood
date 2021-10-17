@@ -68,16 +68,18 @@ def sample_estimator(model, num_classes, feature_list, train_loader):
         data = data.cuda()
         data = Variable(data, volatile=True)
         output, out_features = model.feature_list(data)
-        
+        output = model.forward(data)
         # get hidden features
         for i in range(num_output):
             out_features[i] = out_features[i].view(out_features[i].size(0), out_features[i].size(1), -1)
             out_features[i] = torch.mean(out_features[i].data, 2)
-            
+    
         # compute the accuracy
         pred = output.data.max(1)[1]
-        # equal_flag = pred.eq(target.cuda()).cpu()
-        # correct += equal_flag.sum()
+        # print(pred) 
+        equal_flag = pred.eq(pred.cuda()).cpu()
+        correct += equal_flag.sum()
+
         
         # construct the sample matrix
         for i in range(data.size(0)):
@@ -99,11 +101,11 @@ def sample_estimator(model, num_classes, feature_list, train_loader):
     out_count = 0
     for num_feature in feature_list:
         temp_list = torch.Tensor(num_classes, int(num_feature)).cuda()
-        for j in range(num_classes):
+        for j in range(num_classes): 
             temp_list[j] = torch.mean(list_features[out_count][j], 0)
         sample_class_mean.append(temp_list)
         out_count += 1
-        
+
     precision = []
     for k in range(num_output):
         X = 0
@@ -119,7 +121,7 @@ def sample_estimator(model, num_classes, feature_list, train_loader):
         temp_precision = torch.from_numpy(temp_precision).float().cuda()
         precision.append(temp_precision)
         
-    print('\n Training Accuracy:({:.2f}%)\n'.format(100. * correct / total))
+    # print('\n Training Accuracy:({:.2f}%)\n'.format(100. * correct / total))
 
     return sample_class_mean, precision
 
@@ -144,13 +146,17 @@ def get_Mahalanobis_score(model, test_loader, num_classes, outf, out_flag, net_t
         data, target = Variable(data, requires_grad = True), Variable(target)
         
         out_features = model.intermediate_forward(data, layer_index)
+        # exit()
+        # print("OUTFEATURES-1", out_features.shape)
         out_features = out_features.view(out_features.size(0), out_features.size(1), -1)
         out_features = torch.mean(out_features, 2)
         
         # compute Mahalanobis score
         gaussian_score = 0
         for i in range(num_classes):
-            batch_sample_mean = sample_mean[layer_index][i]
+            batch_sample_mean = sample_mean[layer_index][i] 
+            # print("OUTFEATURES-2", out_features.shape, "sample_mean", sample_mean[layer_index][i].shape)
+            # print("LAYER INDEX", layer_index)
             zero_f = out_features.data - batch_sample_mean
             term_gau = -0.5*torch.mm(torch.mm(zero_f, precision[layer_index]), zero_f.t()).diag()
             if i == 0:

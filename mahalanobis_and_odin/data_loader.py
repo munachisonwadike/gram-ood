@@ -108,7 +108,7 @@ def getTargetDataSet(data_type, batch_size, input_TF, dataroot):
     elif data_type == 'svhn':
         train_loader, test_loader = getSVHN(batch_size=batch_size, TF=input_TF, data_root=dataroot, num_workers=1)
     elif data_type == 'skin_cancer':
-        train_loader, test_loader = getISIC(batch_size, dataroot)
+        train_loader, test_loader = getSkinCancer(batch_size, dataroot)
     else:
         raise Exception(f"There is no data_type={data_type} available!")
 
@@ -144,27 +144,27 @@ def getNonTargetDataSet(data_type, batch_size, input_TF, dataroot):
         test_loader = torch.utils.data.DataLoader(testsetout, batch_size=batch_size, shuffle=False, num_workers=1)
     elif data_type == 'skin_cli':
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(dataroot, 'skin_cli'), transform=trans),
+            datasets.ImageFolder(os.path.join(dataroot, 'skins/clinical'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
     elif data_type == 'skin_derm':
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(dataroot, 'skin_derm'), transform=trans),
+            datasets.ImageFolder(os.path.join(dataroot, 'skins/dermoscopy'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
     elif data_type == 'corrupted':
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(dataroot, 'corrupted'), transform=trans),
+            datasets.ImageFolder(os.path.join(dataroot, 'corrupted/bbox'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
     elif data_type == 'corrupted_70':
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(dataroot, 'corrupted_70'), transform=trans),
+            datasets.ImageFolder(os.path.join(dataroot, 'corrupted/bbox_70'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
     elif data_type == 'imgnet':
         test_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(dataroot, 'imgnet'), transform=trans),
+            datasets.ImageFolder(os.path.join(dataroot, 'imagenet'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
     elif data_type == 'nct':
@@ -172,6 +172,11 @@ def getNonTargetDataSet(data_type, batch_size, input_TF, dataroot):
             datasets.ImageFolder(os.path.join(dataroot, 'nct'), transform=trans),
             batch_size=batch_size,
             shuffle=False)
+    elif data_type == 'final_test':
+        test_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(os.path.join(dataroot, 'final_test'), transform=trans),
+            batch_size=batch_size,
+            shuffle=False)    
     else:
         raise Exception(f"There is no data_type={data_type} available!")
 

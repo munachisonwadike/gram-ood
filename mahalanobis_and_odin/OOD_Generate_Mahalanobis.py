@@ -8,14 +8,16 @@ import torch
 import data_loader
 import numpy as np
 import calculate_log as callog
-import models
+from torchvision import models
 import os
 import lib_generation
 from torchvision import transforms
 from torch.autograd import Variable
+from torch import nn
+
 import sys
 sys.path.append('../')
-from my_models import densenet_121, mobilenet, resnet_50, vgg_16
+from my_models import densenet_121, mobilenet, resnet_50, vgg 
 
 parser = argparse.ArgumentParser(description='PyTorch code: Mahalanobis detector')
 parser.add_argument('--batch_size', type=int, default=32, metavar='N', help='batch size for data loader')
@@ -41,7 +43,7 @@ def main():
     # load networks
     if args.net_type == 'densenet_121':
         model = densenet_121.Net(models.densenet121(pretrained=False), 8)
-        ckpt = torch.load("../checkpoints/densenet-121/checkpoint.pth")
+        ckpt = torch.load("../checkpoints/densenet-121_checkpoint.pth")
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         model.cuda()
@@ -54,13 +56,13 @@ def main():
         print("Done!")
     elif args.net_type == 'resnet_50':
         model = resnet_50.Net(models.resnet50(pretrained=False), 8)
-        ckpt = torch.load("../checkpoints/resnet-50/checkpoint.pth")
+        ckpt = torch.load("../checkpoints/resnet-50_checkpoint.pth")
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         model.cuda()
         print("Done!")
     elif args.net_type == 'vgg_16':
-        model = vgg_16.Net(models.vgg16_bn(pretrained=False), 8)
+        model = vgg.Net(models.vgg16_bn(pretrained=False), 8)
         ckpt = torch.load("../checkpoints/vgg-16/checkpoint.pth")
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
@@ -81,16 +83,21 @@ def main():
     temp_x = torch.rand(2,3,224,224).cuda()
     temp_x = Variable(temp_x)
     temp_list = model.feature_list(temp_x)[1]
+    print("TEMP LIST SHAPE", [x.shape for x in temp_list])
+     
+    # for layer in model.modules():
+    #     if isinstance(layer, nn.ReLU):
+    #         print(layer)
+    # exit()
     num_output = len(temp_list)
     feature_list = np.empty(num_output)
     count = 0
     for out in temp_list:
         feature_list[count] = out.size(1)
         count += 1
-        
+
     print('get sample mean and covariance')
     sample_mean, precision = lib_generation.sample_estimator(model, args.num_classes, feature_list, train_loader)
-    
     print('get Mahalanobis scores')
     m_list = [0.0, 0.01, 0.005, 0.002, 0.0014, 0.001, 0.0005]
 
