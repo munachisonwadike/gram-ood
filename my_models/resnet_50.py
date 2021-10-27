@@ -7,7 +7,7 @@ Email: pacheco.comp@gmail.com
 
 import torch
 from torch import nn
-from torchvision import transforms, models, datasets
+from torchvision import models
 
 class Net (nn.Module):
     """
@@ -72,21 +72,19 @@ class Net (nn.Module):
         return res
 
     def feature_list(self, img, extra_info=None):
-        # https://discuss.pytorch.org/t/accessing-intermediate-layers-of-a-pretrained-network-forward/12113
-        # using the above reference, built this function to return intermediate features
-        # the other reference was the original function here: https://github.com/pokaxpoka/deep_Mahalanobis_detector/blob/90c2105e78c6f76a2801fc4c1cb1b84f4ff9af63/models/resnet.py
-        # the feature_list function is essentially the forward function, returns intermediate features in `out_list` 
-        # instead of full forward pass results  
+        # function to return intermediate features in `out_list`  
+        # reference 1: https://discuss.pytorch.org/t/accessing-intermediate-layers-of-a-pretrained-network-forward/12113
+        # reference 2: https://github.com/pokaxpoka/deep_Mahalanobis_detector/blob/90c2105e78c6f76a2801fc4c1cb1b84f4ff9af63/models/resnet.py
+
         out = img
         out_list = []
- 
-
         for ii, layer in enumerate(self.features):
-            print("COUNT-A", ii, type(layer))
+        # for ii, layer in enumerate(self.features.modules()):
+            # print("COUNT-A", ii, type(layer))
             out = layer(out)
             if isinstance(layer, nn.Sequential) or isinstance(layer, nn.ReLU):
                 out_list.append(out)  
-                
+
         out = out.view(out.size(0), -1)
         out = self.feat_reducer(out)
         if extra_info is not None:
@@ -95,10 +93,9 @@ class Net (nn.Module):
             agg = out
         res = self.classifier(agg) 
         return res, out_list
-
-    # function to extract a specific feature
-    def intermediate_forward(self, img, layer_index):
-        # implemented this one myself as well.. See the notes in the feature_list function
+ 
+    def intermediate_forward(self, img, layer_index): 
+        # function to return a single intermediate feature specified by `layer_index`
         out = img
         count = 0
         for ii, layer in enumerate(self.features): 
